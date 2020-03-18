@@ -2,7 +2,7 @@
 #global gitignore for a Mac OS, Windows and VSCode
 # In MacOS/Linux, save in $HOME and run
 # git config --global core.excludesfile ~/.gitignore_global
-/styles
+styles/
 # MacOS
 
 # General
