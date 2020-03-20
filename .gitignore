@@ -3,6 +3,7 @@
 # In MacOS/Linux, save in $HOME and run
 # git config --global core.excludesfile ~/.gitignore_global
 styles/*
+schema/
 # MacOS
 
 # General

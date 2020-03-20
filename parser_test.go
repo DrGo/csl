@@ -30,7 +30,7 @@ func TestParseFile(t *testing.T) {
 	}
 }
 
-//ExampleParseFileAPAed6 tests parser against the APA-6th-Edition CSL
+//ExampleParseFile tests parser against the APA-6th-Edition CSL
 func ExampleParseFile() {
 	s, err := ParseFile("styles/apa-6th-edition.csl")
 	if err != nil {
@@ -51,3 +51,12 @@ func ExampleParseFile() {
 	// circa
 	// ed. & trans.
 }
+
+// func ExampleParseGoAPA() {
+// 	v := reflect.ValueOf(s)
+// 	typeOfS := v.Type()
+
+// 	for i := 0; i< v.NumField(); i++ {
+// 			fmt.Printf("Field: %s\tValue: %v\n", typeOfS.Field(i).Name, v.Field(i).Interface())
+// 	}
+// }

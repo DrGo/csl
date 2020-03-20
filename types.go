@@ -7,11 +7,13 @@ import "encoding/xml"
 
 // Style holds CSL info
 type Style struct {
-	XMLName                   xml.Name     `xml:"style"`
+	XMLName xml.Name `xml:"style"`
+	InheritableNameAttributes
 	Xmlns                     string       `xml:"xmlns,attr"`
 	Class                     string       `xml:"class,attr"` //"in-text" | "note"
 	Version                   string       `xml:"version,attr"`
 	DemoteNonDroppingParticle string       `xml:"demote-non-dropping-particle,attr"`
+	PageRangeFormat           string       `xml:"page-range-format,attr"`
 	DefaultLocale             string       `xml:"default-locale,attr"`
 	Info                      Info         `xml:"info"`         //n=1
 	Locale                    []Locale     `xml:"locale"`       //n=0+
@@ -86,6 +88,7 @@ type Term struct {
 
 //Citation describes the formatting of in-text or end/footnote citations
 type Citation struct {
+	InheritableNameAttributes
 	Collapse string `xml:"collapse,attr"`
 	Sort     Sort   `xml:"sort"` //n=0+
 	Layout   Layout `xml:"layout"`
@@ -93,16 +96,36 @@ type Citation struct {
 
 // Bibliography describes the formatting of bibliographic entries
 type Bibliography struct {
-	EtAlMin          string `xml:"et-al-min,attr"`
-	EtAlUseFirst     string `xml:"et-al-use-first,attr"`
+	InheritableNameAttributes
+	// white spacing
 	SecondFieldAlign string `xml:"second-field-align,attr"`
+	HangingIndent    string `xml:"hanging-indent,attr"`
+	EntrySpacing     string `xml:"entry-spacing,attr"`
+	LineSpacing      string `xml:"line-spacing,attr"`
 	Layout           Layout `xml:"layout"`
+}
+
+// InheritableNameAttributes Attributes for the cs:names and cs:name elements may also be set on cs:style, cs:citation and cs:bibliography. The available inheritable attributes for cs:name are and, delimiter-precedes-et-al, delimiter-precedes-last, et-al-min, et-al-use-first, et-al-use-last, et-al-subsequent-min, et-al-subsequent-use-first, initialize, initialize-with, name-as-sort-order and sort-separator
+type InheritableNameAttributes struct {
+	And                   string `xml:"and,attr"`
+	EtAlMin               string `xml:"et-al-min,attr"`
+	DelimiterPrecedesLast string `xml:"delimiter-precedes-last,attr"`
+	EtAlUseFirst          string `xml:"et-al-use-first,attr"`
+	EtAlUseLast           string `xml:"et-al-use-last,attr"`
+	SortSeparator         string `xml:"sort-separator,attr"`
+	InitializeWith        string `xml:"initialize-with,attr"`
+	NameAsSortOrder       string `xml:"name-as-sort-order,attr"`
+}
+
+// Affixes provides prefix and suffix attributes
+type Affixes struct {
+	Prefix string `xml:"prefix,attr"` //eg prefix="(" suffix=")" add () around citation
+	Suffix string `xml:"suffix,attr"`
 }
 
 // Layout required child of Citation and Bibiliography; contains >0 rendering elements
 type Layout struct {
-	Prefix    string `xml:"prefix,attr"` //eg prefix="(" suffix=")" add () around citation
-	Suffix    string `xml:"suffix,attr"`
+	Affixes
 	Delimiter string `xml:"delimiter,attr"` // separates neighboring cites
 	// children elements determines the format of each cite
 	RenderingElement
@@ -129,38 +152,48 @@ type RenderingElement struct {
 
 // Number outputs the number variable selected with the required variable attribute
 type Number struct {
+	Affixes
 	Variable string `xml:"variable,attr"`
 	Form     string `xml:"form,attr"` //"numeric" | "ordinal" | "long-ordinal" | "roman"
 }
 
 // Date renders date
 type Date struct {
+	Affixes
 	Form      string     `xml:"form,attr"`       //localized date format "text" or "numeric"
 	DateParts string     `xml:"date-parts,attr"` //defaults to "year-month-day” | "year-month” | "year"
-	Delimiter string     `xml:"delimiter,attr"`
+	Delimiter string     `xml:"delimiter,attr"`  // delimits non-empty pieces of output
+	TextCase  string     `xml:"text-case,attr"`
 	DatePart  []DatePart `xml:"date-part"` //used to override locale defaults
 }
 
 // DatePart renders a data part
 type DatePart struct {
+	Affixes
 	Name         string `xml:"name,attr"` // day | month | year
 	Form         string `xml:"form,attr"`
-	StripPeriods string `xml:"strip-periods,attr"`
+	StripPeriods string `xml:"strip-periods,attr"` //if “true” (default=“false”), any periods in the rendered text are removed.
+	TextCase     string `xml:"text-case,attr"`
 }
 
 // Text whose attributes determines what is rendered
 type Text struct {
-	CData    string `xml:",chardata"`
-	Variable string `xml:"variable,attr"` //renders the text of one of the standard variables
-	Macro    string `xml:"macro,attr"`    // renders the text output of a macro
-	Term     string `xml:"term,attr"`     //renders a term
-	Value    string `xml:"value,attr"`    //renders the value of the attribute
-	TextCase string `xml:"text-case,attr"`
-	Suffix   string `xml:"suffix,attr"`
+	Affixes
+	Quotes       string `xml:"quotes,attr"`        // “true” (“false” is default), the rendered text is wrapped in quotes
+	StripPeriods string `xml:"strip-periods,attr"` //if “true” (default=“false”), any periods in the rendered text are removed.
+	TextCase     string `xml:"text-case,attr"`
+	CData        string `xml:",chardata"`
+	Variable     string `xml:"variable,attr"` //renders the text of one of the standard variables
+	Macro        string `xml:"macro,attr"`    // renders the text output of a macro
+	Term         string `xml:"term,attr"`     //renders a term
+	Value        string `xml:"value,attr"`    //renders the value of the attribute
 }
 
 // Names outputs the contents of one or more name variables specified in the variable attr
 type Names struct {
+	Affixes
+	InheritableNameAttributes
+	Delimiter  string     `xml:"delimiter,attr"` // delimits name lists from different name variables
 	Variable   string     `xml:"variable,attr"`
 	Name       Name       `xml:"name"`       //n=1?
 	EtAl       EtAl       `xml:"et-al"`      //n=1?
@@ -170,11 +203,15 @@ type Names struct {
 
 // Name an optional child of Names used to describe the formatting of individual names
 type Name struct {
-	SortSeparator         string `xml:"sort-separator,attr"`
-	InitializeWith        string `xml:"initialize-with,attr"`
-	NameAsSortOrder       string `xml:"name-as-sort-order,attr"`
-	Delimiter             string `xml:"delimiter,attr"`
-	DelimiterPrecedesLast string `xml:"delimiter-precedes-last,attr"`
+	Affixes
+	InheritableNameAttributes
+	Delimiter string `xml:"delimiter,attr"` // delimits non-empty pieces of output
+}
+
+// NamePart ?
+type NamePart struct {
+	Affixes
+	TextCase string `xml:"text-case,attr"`
 }
 
 // EtAl specifies the term used for et-al abbreviation and its formatting.
@@ -184,8 +221,10 @@ type EtAl struct {
 
 // Label ?
 type Label struct {
-	Form   string `xml:"form,attr"`
-	Prefix string `xml:"prefix,attr"`
+	Affixes
+	StripPeriods string `xml:"strip-periods,attr"` //if “true” (default=“false”), any periods in the rendered text are removed.
+	Form         string `xml:"form,attr"`
+	TextCase     string `xml:"text-case,attr"`
 }
 
 // Substitute adds substitution in case the name variables specified in the parent cs:names element are empty
@@ -195,7 +234,8 @@ type Substitute struct { //n=1?, must be the last element
 
 // Group endering element must contain one or more rendering elements (with the exception of Layout)
 type Group struct {
-	Delimiter string `xml:"delimiter,attr"`
+	Affixes
+	Delimiter string `xml:"delimiter,attr"` // delimits non-empty pieces of output
 	RenderingElement
 }
 
